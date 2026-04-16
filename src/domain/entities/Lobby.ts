@@ -19,12 +19,12 @@ export interface LobbySnapshot {
 
 export class Lobby {
   constructor(
-    public readonly _id: string,
+    public readonly id: string,
     private _status: LobbyStatus = LobbyStatus.Waiting,
     private _players: Player[] = [],
     private _currentTurnPlayerId: string | null = null,
     private _winnerPlayerId: string | null = null,
-    public readonly _createdAt: Date = new Date(),
+    public readonly createdAt: Date = new Date(),
     private _updatedAt: Date = new Date(),
   ) {}
 
@@ -128,12 +128,12 @@ export class Lobby {
 
   toSnapshot(): LobbySnapshot {
 return {
-      id: this._id,
+      id: this.id,
       status: this._status,
       players: this._players.map((p) => p.toSnapshot()),
       currentTurnPlayerId: this._currentTurnPlayerId,
       winnerPlayerId: this._winnerPlayerId,
-      createdAt: this._createdAt.toISOString(),
+      createdAt: this.createdAt.toISOString(),
       updatedAt: this._updatedAt.toISOString(),
     };
   }

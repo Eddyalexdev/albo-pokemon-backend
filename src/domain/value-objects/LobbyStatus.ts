@@ -5,4 +5,4 @@ export const LobbyStatus = {
   Finished: 'finished',
 } as const;
 
-export type LobbyStatusValue = (typeof LobbyStatus)[keyof typeof LobbyStatus];
+export type LobbyStatus = (typeof LobbyStatus)[keyof typeof LobbyStatus];

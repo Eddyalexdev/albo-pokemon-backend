@@ -16,9 +16,9 @@ export interface PlayerSnapshot {
 
 export class Player {
   constructor(
-    public readonly _id: string,
+    public readonly id: string,
     public socketId: string,
-    public readonly _nickname: string,
+    public readonly nickname: string,
     private _team: Pokemon[] = [],
     private _activeIndex: number = 0,
     private _ready: boolean = false,
@@ -77,9 +77,9 @@ export class Player {
 
   toSnapshot(): PlayerSnapshot {
     return {
-      id: this._id,
+      id: this.id,
       socketId: this.socketId,
-      nickname: this._nickname,
+      nickname: this.nickname,
       team: this._team.map((p) => p.toSnapshot()),
       activeIndex: this._activeIndex,
       ready: this._ready,

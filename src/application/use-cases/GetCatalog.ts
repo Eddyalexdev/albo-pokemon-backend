@@ -4,9 +4,9 @@ import { CatalogListItem, PokemonCatalogService } from '../../domain/services/Po
  * Retrieves the full Pokemon catalog for listing.
  */
 export class GetCatalog {
-  constructor(private readonly catalog: PokemonCatalogService) {}
+  constructor(private readonly _catalog: PokemonCatalogService) {}
 
   execute(): Promise<CatalogListItem[]> {
-    return this.catalog.list();
+    return this._catalog.list();
   }
 }

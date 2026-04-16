@@ -8,22 +8,22 @@ import { BattleEventPublisher } from '../ports/BattleEventPublisher.js';
  */
 export class MarkReady {
   constructor(
-    private readonly lobbies: LobbyRepository,
-    private readonly battles: BattleRepository,
-    private readonly publisher: BattleEventPublisher,
+    private readonly _lobbies: LobbyRepository,
+    private readonly _battles: BattleRepository,
+    private readonly _publisher: BattleEventPublisher,
   ) {}
 
   async execute(playerId: string): Promise<void> {
-    const lobby = await this.lobbies.findOrCreateSingleton();
+    const lobby = await this._lobbies.findOrCreateSingleton();
     lobby.markPlayerReady(playerId);
 
     const started = lobby.startBattleIfReady();
-    await this.lobbies.save(lobby);
-    this.publisher.lobbyStatus(lobby.toSnapshot());
+    await this._lobbies.save(lobby);
+    this._publisher.lobbyStatus(lobby.toSnapshot());
 
     if (started) {
-      await this.battles.create(lobby.id);
-      this.publisher.battleStart(lobby.toSnapshot());
+      await this._battles.create(lobby.id);
+      this._publisher.battleStart(lobby.toSnapshot());
     }
   }
 }

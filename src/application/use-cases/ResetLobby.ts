@@ -6,13 +6,13 @@ import { BattleEventPublisher } from '../ports/BattleEventPublisher.js';
  */
 export class ResetLobby {
   constructor(
-    private readonly lobbies: LobbyRepository,
-    private readonly publisher: BattleEventPublisher,
+    private readonly _lobbies: LobbyRepository,
+    private readonly _publisher: BattleEventPublisher,
   ) {}
 
   async execute(): Promise<void> {
-    await this.lobbies.reset();
-    const fresh = await this.lobbies.findOrCreateSingleton();
-    this.publisher.lobbyStatus(fresh.toSnapshot());
+    await this._lobbies.reset();
+    const fresh = await this._lobbies.findOrCreateSingleton();
+    this._publisher.lobbyStatus(fresh.toSnapshot());
   }
 }

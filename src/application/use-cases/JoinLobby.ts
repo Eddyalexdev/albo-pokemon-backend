@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-import { Player } from '../../domain/entities/Player.js';
 import { LobbyRepository } from '../../domain/repositories/LobbyRepository.js';
 import { DomainError } from '../../domain/errors/DomainError.js';
 import { BattleEventPublisher } from '../ports/BattleEventPublisher.js';
@@ -16,20 +14,23 @@ export interface JoinLobbyOutput {
 
 export class JoinLobby {
   constructor(
-    private readonly lobbies: LobbyRepository,
-    private readonly publisher: BattleEventPublisher,
+    private readonly _lobbies: LobbyRepository,
+    private readonly _publisher: BattleEventPublisher,
   ) {}
 
   async execute(input: JoinLobbyInput): Promise<JoinLobbyOutput> {
     const nickname = input.nickname.trim();
     if (!nickname) throw new DomainError('Nickname is required');
 
-    const lobby = await this.lobbies.findOrCreateSingleton();
+    const lobby = await this._lobbies.findOrCreateSingleton();
     const player = new Player(randomUUID(), input.socketId, nickname);
     lobby.addPlayer(player);
-    await this.lobbies.save(lobby);
+    await this._lobbies.save(lobby);
 
-    this.publisher.lobbyStatus(lobby.toSnapshot());
+    this._publisher.lobbyStatus(lobby.toSnapshot());
     return { playerId: player.id, lobbyId: lobby.id };
   }
 }
+
+import { randomUUID } from 'node:crypto';
+import { Player } from '../../domain/entities/Player.js';

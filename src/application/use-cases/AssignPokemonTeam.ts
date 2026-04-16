@@ -12,27 +12,27 @@ const TEAM_SIZE = 3;
  */
 export class AssignPokemonTeam {
   constructor(
-    private readonly lobbies: LobbyRepository,
-    private readonly catalog: PokemonCatalogService,
-    private readonly publisher: BattleEventPublisher,
+    private readonly _lobbies: LobbyRepository,
+    private readonly _catalog: PokemonCatalogService,
+    private readonly _publisher: BattleEventPublisher,
   ) {}
 
   async execute(playerId: string): Promise<void> {
-    const lobby = await this.lobbies.findOrCreateSingleton();
+    const lobby = await this._lobbies.findOrCreateSingleton();
     const player = lobby.findPlayerById(playerId);
     if (!player) throw new NotFoundError('Player not found in lobby');
 
     const opponent = lobby.opponentOf(playerId);
     const takenIds = new Set<number>((opponent?.team ?? []).map((p) => p.id));
 
-    const all = await this.catalog.list();
+    const all = await this._catalog.list();
     const available = all.filter((p) => !takenIds.has(p.id));
     if (available.length < TEAM_SIZE) {
       throw new DomainError('Not enough Pokemon available to form a team');
     }
 
     const picked = pickRandom(available, TEAM_SIZE).map((p) => p.id);
-    const details = await this.catalog.getManyDetails(picked);
+    const details = await this._catalog.getManyDetails(picked);
 
     const team = details.map(
       (d) =>
@@ -49,8 +49,8 @@ export class AssignPokemonTeam {
     );
 
     player.assignTeam(team);
-    await this.lobbies.save(lobby);
-    this.publisher.lobbyStatus(lobby.toSnapshot());
+    await this._lobbies.save(lobby);
+    this._publisher.lobbyStatus(lobby.toSnapshot());
   }
 }
 

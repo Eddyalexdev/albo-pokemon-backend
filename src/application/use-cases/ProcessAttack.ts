@@ -26,14 +26,14 @@ export class ProcessAttack {
   private turnCounter = 0;
 
   constructor(
-    private readonly lobbies: LobbyRepository,
-    private readonly battles: BattleRepository,
-    private readonly publisher: BattleEventPublisher,
+    private readonly _lobbies: LobbyRepository,
+    private readonly _battles: BattleRepository,
+    private readonly _publisher: BattleEventPublisher,
   ) {}
 
   async execute(playerId: string): Promise<void> {
     await this.mutex.runExclusive(async () => {
-      const lobby = await this.lobbies.findOrCreateSingleton();
+      const lobby = await this._lobbies.findOrCreateSingleton();
 
       if (lobby.status !== LobbyStatus.Battling) {
         throw new InvalidOperationError('Battle is not active');
@@ -55,7 +55,7 @@ export class ProcessAttack {
       const damage = calculateDamage(attackerMon.attack, defenderMon.defense);
       defenderMon.receiveDamage(damage);
 
-      const battle = await this.battles.findActiveByLobby(lobby.id);
+      const battle = await this._battles.findActiveByLobby(lobby.id);
       if (!battle) throw new NotFoundError('Active battle not found');
 
       const turn: TurnRecord = {
@@ -69,16 +69,16 @@ export class ProcessAttack {
         defenderDefeated: defenderMon.defeated,
         timestamp: new Date().toISOString(),
       };
-      await this.battles.appendTurn(battle.id, turn);
+      await this._battles.appendTurn(battle.id, turn);
 
-      this.publisher.turnResult(lobby.toSnapshot(), turn);
+      this._publisher.turnResult(lobby.toSnapshot(), turn);
 
       if (defenderMon.defeated) {
-        this.publisher.pokemonDefeated(lobby.toSnapshot(), defender.id, defenderMon.id);
+        this._publisher.pokemonDefeated(lobby.toSnapshot(), defender.id, defenderMon.id);
 
         const advanced = defender.advanceToNextAlive();
         if (advanced && defender.activePokemon) {
-          this.publisher.pokemonEntered(
+          this._publisher.pokemonEntered(
             lobby.toSnapshot(),
             defender.id,
             defender.activePokemon.id,
@@ -87,16 +87,16 @@ export class ProcessAttack {
 
         if (!defender.hasAliveRemaining()) {
           lobby.finish(attacker.id);
-          await this.lobbies.save(lobby);
-          await this.battles.finish(battle.id, attacker.id);
-          this.publisher.battleEnd(lobby.toSnapshot(), attacker.id);
+          await this._lobbies.save(lobby);
+          await this._battles.finish(battle.id, attacker.id);
+          this._publisher.battleEnd(lobby.toSnapshot(), attacker.id);
           return;
         }
       }
 
       lobby.switchTurn();
-      await this.lobbies.save(lobby);
-      this.publisher.lobbyStatus(lobby.toSnapshot());
+      await this._lobbies.save(lobby);
+      this._publisher.lobbyStatus(lobby.toSnapshot());
     });
   }
 }

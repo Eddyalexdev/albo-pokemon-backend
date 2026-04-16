@@ -2,6 +2,10 @@
 
 > A realtime multiplayer Pokémon battle backend. Two trainers enter, one champion leaves.
 
+[![CI](https://github.com/Eddyalexdev/albo-pokemon-backend/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Eddyalexdev/albo-pokemon-backend/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Eddyalexdev/albo-pokemon-backend/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/Eddyalexdev/albo-pokemon-backend/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ```
      ██╗    ██╗███████╗██╗      ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗
      ██║    ██║██╔════╝██║     ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██║

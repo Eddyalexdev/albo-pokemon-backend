@@ -7,7 +7,8 @@ import { Lobby } from '../entities/Lobby.js';
  */
 export interface LobbyRepository {
   findById(id: string): Promise<Lobby | null>;
-  findOrCreateSingleton(): Promise<Lobby>;
+  create(id: string): Promise<Lobby>;
+  findWaitingLobby(): Promise<Lobby | null>;
   save(lobby: Lobby): Promise<void>;
-  reset(): Promise<void>;
+  delete(id: string): Promise<void>;
 }

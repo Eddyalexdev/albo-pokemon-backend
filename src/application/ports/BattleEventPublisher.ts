@@ -7,11 +7,11 @@ import { TurnRecord } from '../../domain/entities/Battle.js';
  * Infrastructure provides the Socket.IO adapter.
  */
 export interface BattleEventPublisher {
-  lobbyStatus(_lobby: LobbySnapshot): void;
-  battleStart(_lobby: LobbySnapshot): void;
-  turnResult(_lobby: LobbySnapshot, _turn: TurnRecord): void;
-  pokemonDefeated(_lobby: LobbySnapshot, _playerId: string, _pokemonId: number): void;
-  pokemonEntered(_lobby: LobbySnapshot, _playerId: string, _pokemonId: number): void;
-  battleEnd(_lobby: LobbySnapshot, _winnerPlayerId: string): void;
-  error(_socketId: string, _message: string): void;
+  lobbyStatus(lobby: LobbySnapshot, lobbyId: string): void;
+  battleStart(lobby: LobbySnapshot, lobbyId: string): void;
+  turnResult(lobby: LobbySnapshot, turn: TurnRecord, lobbyId: string): void;
+  pokemonDefeated(lobby: LobbySnapshot, playerId: string, pokemonId: number, lobbyId: string): void;
+  pokemonEntered(lobby: LobbySnapshot, playerId: string, pokemonId: number, lobbyId: string): void;
+  battleEnd(lobby: LobbySnapshot, winnerPlayerId: string, lobbyId: string): void;
+  error(socketId: string, message: string): void;
 }

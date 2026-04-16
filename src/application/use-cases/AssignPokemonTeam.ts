@@ -17,8 +17,10 @@ export class AssignPokemonTeam {
     private readonly _publisher: BattleEventPublisher,
   ) {}
 
-  async execute(playerId: string): Promise<void> {
-    const lobby = await this._lobbies.findOrCreateSingleton();
+  async execute(playerId: string, lobbyId: string): Promise<void> {
+    const lobby = await this._lobbies.findById(lobbyId);
+    if (!lobby) throw new NotFoundError('Lobby not found');
+
     const player = lobby.findPlayerById(playerId);
     if (!player) throw new NotFoundError('Player not found in lobby');
 
@@ -50,7 +52,7 @@ export class AssignPokemonTeam {
 
     player.assignTeam(team);
     await this._lobbies.save(lobby);
-    this._publisher.lobbyStatus(lobby.toSnapshot());
+    this._publisher.lobbyStatus(lobby.toSnapshot(), lobbyId);
   }
 }
 

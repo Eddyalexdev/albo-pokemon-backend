@@ -10,20 +10,19 @@ import { Mutex } from '../../shared/Mutex.js';
  * ProcessAttack — Use Case
  * Processes a single attack atomically.
  *
- * Concurrency model: a process-wide Mutex serializes all attack processing.
- * Since the spec requires a single lobby, this guarantees atomic turn handling
- * without race conditions.
+ * Concurrency model: one Mutex per lobbyId — each battle processes turns
+ * in isolation without blocking other lobbies.
  *
  * Flow:
- *  1. Acquire lock
+ *  1. Acquire per-lobby lock
  *  2. Reload lobby + validate turn ownership
  *  3. Apply damage, swap defeated Pokemon, detect winner
  *  4. Persist + emit events
  *  5. Release lock
  */
 export class ProcessAttack {
-  private readonly mutex = new Mutex();
-  private turnCounter = 0;
+  private readonly mutexes = new Map<string, Mutex>();
+  private turnCounters = new Map<string, number>();
 
   constructor(
     private readonly _lobbies: LobbyRepository,
@@ -31,9 +30,28 @@ export class ProcessAttack {
     private readonly _publisher: BattleEventPublisher,
   ) {}
 
-  async execute(playerId: string): Promise<void> {
-    await this.mutex.runExclusive(async () => {
-      const lobby = await this._lobbies.findOrCreateSingleton();
+  private getMutex(lobbyId: string): Mutex {
+    if (!this.mutexes.has(lobbyId)) {
+      this.mutexes.set(lobbyId, new Mutex());
+    }
+    return this.mutexes.get(lobbyId)!;
+  }
+
+  private getTurnCounter(lobbyId: string): number {
+    return this.turnCounters.get(lobbyId) ?? 0;
+  }
+
+  private incrementTurnCounter(lobbyId: string): number {
+    const next = (this.getTurnCounter(lobbyId) ?? 0) + 1;
+    this.turnCounters.set(lobbyId, next);
+    return next;
+  }
+
+  async execute(playerId: string, lobbyId: string): Promise<void> {
+    const mutex = this.getMutex(lobbyId);
+    await mutex.runExclusive(async () => {
+      const lobby = await this._lobbies.findById(lobbyId);
+      if (!lobby) throw new NotFoundError('Lobby not found');
 
       if (lobby.status !== LobbyStatus.Battling) {
         throw new InvalidOperationError('Battle is not active');
@@ -59,7 +77,7 @@ export class ProcessAttack {
       if (!battle) throw new NotFoundError('Active battle not found');
 
       const turn: TurnRecord = {
-        turnNumber: ++this.turnCounter,
+        turnNumber: this.incrementTurnCounter(lobbyId),
         attackerPlayerId: attacker.id,
         defenderPlayerId: defender.id,
         attackerPokemonId: attackerMon.id,
@@ -71,10 +89,10 @@ export class ProcessAttack {
       };
       await this._battles.appendTurn(battle.id, turn);
 
-      this._publisher.turnResult(lobby.toSnapshot(), turn);
+      this._publisher.turnResult(lobby.toSnapshot(), turn, lobbyId);
 
       if (defenderMon.defeated) {
-        this._publisher.pokemonDefeated(lobby.toSnapshot(), defender.id, defenderMon.id);
+        this._publisher.pokemonDefeated(lobby.toSnapshot(), defender.id, defenderMon.id, lobbyId);
 
         const advanced = defender.advanceToNextAlive();
         if (advanced && defender.activePokemon) {
@@ -82,6 +100,7 @@ export class ProcessAttack {
             lobby.toSnapshot(),
             defender.id,
             defender.activePokemon.id,
+            lobbyId,
           );
         }
 
@@ -89,14 +108,14 @@ export class ProcessAttack {
           lobby.finish(attacker.id);
           await this._lobbies.save(lobby);
           await this._battles.finish(battle.id, attacker.id);
-          this._publisher.battleEnd(lobby.toSnapshot(), attacker.id);
+          this._publisher.battleEnd(lobby.toSnapshot(), attacker.id, lobbyId);
           return;
         }
       }
 
       lobby.switchTurn();
       await this._lobbies.save(lobby);
-      this._publisher.lobbyStatus(lobby.toSnapshot());
+      this._publisher.lobbyStatus(lobby.toSnapshot(), lobbyId);
     });
   }
 }

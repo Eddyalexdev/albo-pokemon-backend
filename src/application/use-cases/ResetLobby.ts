@@ -2,7 +2,8 @@ import { LobbyRepository } from '../../domain/repositories/LobbyRepository.js';
 import { BattleEventPublisher } from '../ports/BattleEventPublisher.js';
 
 /**
- * Resets the lobby to its initial state, allowing a new battle to start.
+ * Deletes a lobby and creates a fresh one.
+ * Allows starting a new battle after the previous one ended.
  */
 export class ResetLobby {
   constructor(
@@ -10,9 +11,9 @@ export class ResetLobby {
     private readonly _publisher: BattleEventPublisher,
   ) {}
 
-  async execute(): Promise<void> {
-    await this._lobbies.reset();
-    const fresh = await this._lobbies.findOrCreateSingleton();
-    this._publisher.lobbyStatus(fresh.toSnapshot());
+  async execute(lobbyId: string): Promise<void> {
+    await this._lobbies.delete(lobbyId);
+    const fresh = await this._lobbies.create(lobbyId);
+    this._publisher.lobbyStatus(fresh.toSnapshot(), lobbyId);
   }
 }

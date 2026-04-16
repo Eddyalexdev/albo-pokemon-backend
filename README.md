@@ -141,8 +141,8 @@ pnpm dev
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/health` | Health check — `{ status: "ok" }` |
-| `GET` | `/api/catalog` | List all Pokémon — `{ items: [{id, name}] }` |
-| `GET` | `/api/catalog/:id` | Pokémon detail — `{ pokemon: {...} }` |
+| `GET` | `/list` | List all Pokémon — `[{id, name}]` |
+| `GET` | `/list/:id` | Pokémon detail — `{ pokemon }` |
 
 ---
 

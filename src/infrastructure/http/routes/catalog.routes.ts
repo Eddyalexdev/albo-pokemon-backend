@@ -12,15 +12,15 @@ export function registerCatalogRoutes(
   app: FastifyInstance,
   deps: { getCatalog: GetCatalog; catalog: PokemonCatalogService },
 ): void {
-  app.get('/api/catalog', async () => {
+  app.get('/list', async () => {
     const items = await deps.getCatalog.execute();
-    return { items };
+    return items;
   });
 
-  app.get<{ Params: { id: string } }>('/api/catalog/:id', async (req) => {
+  app.get<{ Params: { id: string } }>('/list/:id', async (req) => {
     const id = Number(req.params.id);
     const pokemon = await deps.catalog.getDetail(id);
-    return { pokemon };
+    return pokemon;
   });
 
   app.get('/health', async () => ({ status: 'ok' }));

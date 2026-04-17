@@ -41,14 +41,15 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
     socket.on('create_lobby', async (payload: unknown, ack?: (res: unknown) => void) => {
       try {
         const newLobbyId = randomUUID();
-        const lobby = await deps.joinLobby.execute({
+        const result = await deps.joinLobby.execute({
           nickname: 'HOST',
           socketId: socket.id,
           lobbyId: newLobbyId,
         });
-        socket.join(lobbyRoom(lobby.lobbyId));
-        socketInfoMap.set(socket.id, { playerId: lobby.playerId, lobbyId: lobby.lobbyId });
-        ack?.({ ok: true, lobbyId: lobby.lobbyId });
+        socket.join(lobbyRoom(result.lobbyId));
+        socketInfoMap.set(socket.id, { playerId: result.playerId, lobbyId: result.lobbyId });
+        socket.emit('lobby_status', result.lobby);
+        ack?.({ ok: true, lobbyId: result.lobbyId });
       } catch (err) {
         handleError(socket, err, ack);
       }
@@ -60,7 +61,8 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
         const result = await deps.joinLobby.execute({ nickname, socketId: socket.id, lobbyId });
         socket.join(lobbyRoom(result.lobbyId));
         socketInfoMap.set(socket.id, { playerId: result.playerId, lobbyId: result.lobbyId });
-        ack?.({ ok: true, ...result });
+        socket.emit('lobby_status', result.lobby);
+        ack?.({ ok: true, playerId: result.playerId, lobbyId: result.lobbyId });
       } catch (err) {
         handleError(socket, err, ack);
       }

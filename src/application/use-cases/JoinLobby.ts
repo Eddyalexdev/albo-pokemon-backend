@@ -3,6 +3,7 @@ import { Player } from '../../domain/entities/Player.js';
 import { LobbyRepository } from '../../domain/repositories/LobbyRepository.js';
 import { DomainError } from '../../domain/errors/DomainError.js';
 import { BattleEventPublisher } from '../ports/BattleEventPublisher.js';
+import type { LobbySnapshot } from '../../domain/entities/Lobby.js';
 
 export interface JoinLobbyInput {
   nickname: string;
@@ -13,6 +14,7 @@ export interface JoinLobbyInput {
 export interface JoinLobbyOutput {
   playerId: string;
   lobbyId: string;
+  lobby: LobbySnapshot;
 }
 
 export class JoinLobby {
@@ -36,7 +38,8 @@ export class JoinLobby {
     if (existingPlayer) {
       existingPlayer.updateSocketId(input.socketId);
       await this._lobbies.save(lobby);
-      return { playerId: existingPlayer.id, lobbyId: lobby.id };
+      const snapshot = lobby.toSnapshot();
+      return { playerId: existingPlayer.id, lobbyId: lobby.id, lobby: snapshot };
     }
 
     if (lobby.players.length >= 2) {
@@ -47,7 +50,8 @@ export class JoinLobby {
     lobby.addPlayer(player);
     await this._lobbies.save(lobby);
 
-    this._publisher.lobbyStatus(lobby.toSnapshot(), lobby.id);
-    return { playerId: player.id, lobbyId: lobby.id };
+    const snapshot = lobby.toSnapshot();
+    this._publisher.lobbyStatus(snapshot, lobby.id);
+    return { playerId: player.id, lobbyId: lobby.id, lobby: snapshot };
   }
 }

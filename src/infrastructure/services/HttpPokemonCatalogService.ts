@@ -64,6 +64,7 @@ export class HttpPokemonCatalogService implements PokemonCatalogService {
       speed: d.speed,
       sprite: d.sprite,
       defeated: false,
+      moves: [],
     };
   }
 

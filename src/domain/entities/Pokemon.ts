@@ -1,3 +1,5 @@
+import { Move, MoveSnapshot, moveToSnapshot, snapshotToMove } from './Move.js';
+
 /**
  * Pokemon — Entity
  * Pure domain model. No framework imports.
@@ -14,6 +16,7 @@ export interface PokemonSnapshot {
   speed: number;
   sprite: string;
   defeated: boolean;
+  moves: MoveSnapshot[];
 }
 
 export class Pokemon {
@@ -28,6 +31,7 @@ export class Pokemon {
     public readonly sprite: string,
     private _currentHp: number = maxHp,
     private _defeated: boolean = false,
+    private _moves: Move[] = [],
   ) {}
 
   get currentHp(): number {
@@ -36,6 +40,10 @@ export class Pokemon {
 
   get defeated(): boolean {
     return this._defeated;
+  }
+
+  get moves(): readonly Move[] {
+    return this._moves;
   }
 
   /**
@@ -47,6 +55,10 @@ export class Pokemon {
     const next = this._currentHp - damage;
     this._currentHp = next < 0 ? 0 : next;
     if (this._currentHp === 0) this._defeated = true;
+  }
+
+  assignMoves(moves: Move[]): void {
+    this._moves = moves;
   }
 
   toSnapshot(): PokemonSnapshot {
@@ -61,6 +73,7 @@ export class Pokemon {
       speed: this.speed,
       sprite: this.sprite,
       defeated: this._defeated,
+      moves: this._moves.map(moveToSnapshot),
     };
   }
 
@@ -76,6 +89,7 @@ export class Pokemon {
       s.sprite,
       s.hp,
       s.defeated,
+      (s.moves ?? []).map(snapshotToMove),
     );
   }
 }

@@ -70,7 +70,8 @@ export class ProcessAttack {
         throw new DomainError('Active Pokemon missing');
       }
 
-      const damage = calculateDamage(attackerMon.attack, defenderMon.defense);
+      const movePower = 50; // TODO: resolve from attacker's selected move
+      const damage = calculateDamage(movePower, attackerMon.attack, defenderMon.defense);
       defenderMon.receiveDamage(damage);
 
       const battle = await this._battles.findActiveByLobby(lobby.id);

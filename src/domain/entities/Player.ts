@@ -40,6 +40,10 @@ export class Player {
     return this._team[this._activeIndex] ?? null;
   }
 
+  updateSocketId(newSocketId: string): void {
+    this.socketId = newSocketId;
+  }
+
   assignTeam(team: Pokemon[]): void {
     if (team.length !== 3) {
       throw new Error('A team must have exactly 3 Pokemon');

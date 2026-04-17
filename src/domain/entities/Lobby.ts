@@ -52,6 +52,13 @@ export class Lobby {
     if (this._players.length >= 2) {
       throw new DomainError('Lobby is full');
     }
+    // Allow reconnection: if same nickname exists, update socketId
+    const existing = this._players.find((p) => p.nickname === player.nickname);
+    if (existing) {
+      existing.updateSocketId(player.socketId);
+      this.touch();
+      return;
+    }
     if (this._players.some((p) => p.nickname === player.nickname)) {
       throw new DomainError('Nickname already taken in this lobby');
     }

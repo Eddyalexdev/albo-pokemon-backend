@@ -30,6 +30,15 @@ export class JoinLobby {
       ? await this._lobbies.findById(lobbyId) ?? await this._lobbies.create(lobbyId)
       : await this._lobbies.create(randomUUID());
 
+    // Check for reconnection: player with same nickname but disconnected
+    // If found, update socketId and return
+    const existingPlayer = lobby.players.find((p) => p.nickname === nickname);
+    if (existingPlayer) {
+      existingPlayer.updateSocketId(input.socketId);
+      await this._lobbies.save(lobby);
+      return { playerId: existingPlayer.id, lobbyId: lobby.id };
+    }
+
     if (lobby.players.length >= 2) {
       throw new DomainError('Lobby is full');
     }

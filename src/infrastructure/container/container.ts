@@ -3,6 +3,7 @@ import { Env } from '../config/env.js';
 import { MongoLobbyRepository } from '../repositories/MongoLobbyRepository.js';
 import { MongoBattleRepository } from '../repositories/MongoBattleRepository.js';
 import { HttpPokemonCatalogService } from '../services/HttpPokemonCatalogService.js';
+import { PokeApiMoveService } from '../services/PokeApiMoveService.js';
 import { SocketBattleEventPublisher } from '../sockets/SocketBattleEventPublisher.js';
 import { GetCatalog } from '../../application/use-cases/GetCatalog.js';
 import { JoinLobby } from '../../application/use-cases/JoinLobby.js';
@@ -19,6 +20,7 @@ export function buildContainer(env: Env, io: Server) {
   const lobbies = new MongoLobbyRepository();
   const battles = new MongoBattleRepository();
   const catalog = new HttpPokemonCatalogService(env.POKEMON_API_BASE_URL);
+  const moveCatalog = new PokeApiMoveService();
   const publisher = new SocketBattleEventPublisher(io);
 
   const getCatalog = new GetCatalog(catalog);
@@ -30,6 +32,7 @@ export function buildContainer(env: Env, io: Server) {
 
   return {
     catalog,
+    moveCatalog,
     publisher,
     getCatalog,
     joinLobby,

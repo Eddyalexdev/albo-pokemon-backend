@@ -1,19 +1,21 @@
 import { Pokemon } from '../../domain/entities/Pokemon.js';
 import { LobbyRepository } from '../../domain/repositories/LobbyRepository.js';
 import { PokemonCatalogService } from '../../domain/services/PokemonCatalogService.js';
+import { MoveCatalogService } from '../../domain/services/MoveCatalogService.js';
 import { DomainError, NotFoundError } from '../../domain/errors/DomainError.js';
 import { BattleEventPublisher } from '../ports/BattleEventPublisher.js';
 
 const TEAM_SIZE = 3;
 
 /**
- * Assigns 3 random Pokemon to a player.
+ * Assigns 3 random Pokemon to a player with real moves from PokeAPI.
  * Pokemon already taken by the opponent are excluded.
  */
 export class AssignPokemonTeam {
   constructor(
     private readonly _lobbies: LobbyRepository,
     private readonly _catalog: PokemonCatalogService,
+    private readonly _moveCatalog: MoveCatalogService,
     private readonly _publisher: BattleEventPublisher,
   ) {}
 
@@ -33,12 +35,14 @@ export class AssignPokemonTeam {
       throw new DomainError('Not enough Pokemon available to form a team');
     }
 
-    const picked = pickRandom(available, TEAM_SIZE).map((p) => p.id);
+    const picked = this.pickRandom(available, TEAM_SIZE).map((p) => p.id);
     const details = await this._catalog.getManyDetails(picked);
 
-    const team = details.map(
-      (d) =>
-        new Pokemon(
+    // Fetch moves for each Pokemon in parallel
+    const team = await Promise.all(
+      details.map(async (d) => {
+        const moves = await this._moveCatalog.getMovesForPokemon(d.id);
+        const pokemon = new Pokemon(
           d.id,
           d.name,
           d.type,
@@ -47,22 +51,25 @@ export class AssignPokemonTeam {
           d.defense,
           d.speed,
           d.sprite,
-        ),
+        );
+        pokemon.assignMoves(moves);
+        return pokemon;
+      }),
     );
 
     player.assignTeam(team);
     await this._lobbies.save(lobby);
     this._publisher.lobbyStatus(lobby.toSnapshot(), lobbyId);
   }
-}
 
-function pickRandom<T>(arr: T[], n: number): T[] {
-  const copy = [...arr];
-  const out: T[] = [];
-  for (let i = 0; i < n && copy.length > 0; i++) {
-    const idx = Math.floor(Math.random() * copy.length);
-    const [item] = copy.splice(idx, 1);
-    if (item) out.push(item);
+  private pickRandom<T>(arr: T[], n: number): T[] {
+    const copy = [...arr];
+    const out: T[] = [];
+    for (let i = 0; i < n && copy.length > 0; i++) {
+      const idx = Math.floor(Math.random() * copy.length);
+      const [item] = copy.splice(idx, 1);
+      if (item) out.push(item);
+    }
+    return out;
   }
-  return out;
 }

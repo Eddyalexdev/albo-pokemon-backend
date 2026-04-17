@@ -4,18 +4,12 @@
  */
 
 /**
- * Pure damage calculation with move power.
- * Rule: damage = max(1, movePower + attackBonus - defenseReduction)
- * Where attackBonus = attacker.attack * 0.3 and defenseReduction = defender.defense * 0.2
- * This prevents one-hit kills while keeping moves meaningful.
+ * Damage = max(1, attackerAttack - defenderDefense)
+ * Spec: if the result is less than 1, set to 1 (minimum damage rule).
  */
-export function calculateDamage(
-  movePower: number,
-  attackerAttack: number,
-  defenderDefense: number,
-): number {
-  const raw = movePower + (attackerAttack * 0.3) - (defenderDefense * 0.2);
-  return raw < 1 ? 1 : Math.floor(raw);
+export function calculateDamage(attackerAttack: number, defenderDefense: number): number {
+  const raw = attackerAttack - defenderDefense;
+  return raw < 1 ? 1 : raw;
 }
 
 export interface TurnRecord {

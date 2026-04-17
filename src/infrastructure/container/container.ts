@@ -3,7 +3,6 @@ import { Env } from '../config/env.js';
 import { MongoLobbyRepository } from '../repositories/MongoLobbyRepository.js';
 import { MongoBattleRepository } from '../repositories/MongoBattleRepository.js';
 import { HttpPokemonCatalogService } from '../services/HttpPokemonCatalogService.js';
-import { PokeApiMoveService } from '../services/PokeApiMoveService.js';
 import { SocketBattleEventPublisher } from '../sockets/SocketBattleEventPublisher.js';
 import { GetCatalog } from '../../application/use-cases/GetCatalog.js';
 import { JoinLobby } from '../../application/use-cases/JoinLobby.js';
@@ -20,19 +19,17 @@ export function buildContainer(env: Env, io: Server) {
   const lobbies = new MongoLobbyRepository();
   const battles = new MongoBattleRepository();
   const catalog = new HttpPokemonCatalogService(env.POKEMON_API_BASE_URL);
-  const moveCatalog = new PokeApiMoveService();
   const publisher = new SocketBattleEventPublisher(io);
 
   const getCatalog = new GetCatalog(catalog);
   const joinLobby = new JoinLobby(lobbies, publisher);
-  const assignTeam = new AssignPokemonTeam(lobbies, catalog, moveCatalog, publisher);
+  const assignTeam = new AssignPokemonTeam(lobbies, catalog, publisher);
   const markReady = new MarkReady(lobbies, battles, publisher);
   const processAttack = new ProcessAttack(lobbies, battles, publisher);
   const resetLobby = new ResetLobby(lobbies, publisher);
 
   return {
     catalog,
-    moveCatalog,
     publisher,
     getCatalog,
     joinLobby,

@@ -1,5 +1,4 @@
 import type { Server, Socket } from 'socket.io';
-import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { JoinLobby } from '../../../application/use-cases/JoinLobby.js';
 import { AssignPokemonTeam } from '../../../application/use-cases/AssignPokemonTeam.js';
@@ -18,11 +17,6 @@ export interface LobbyHandlersDeps {
 
 const joinSchema = z.object({
   nickname: z.string().min(1).max(20),
-  lobbyId: z.string().optional(),
-});
-
-const attackSchema = z.object({
-  moveName: z.string().optional(),
 });
 
 interface SocketInfo {
@@ -38,27 +32,10 @@ function lobbyRoom(lobbyId: string): string {
 
 export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void {
   io.on('connection', (socket: Socket) => {
-    socket.on('create_lobby', async (payload: unknown, ack?: (res: unknown) => void) => {
-      try {
-        const newLobbyId = randomUUID();
-        const result = await deps.joinLobby.execute({
-          nickname: 'HOST',
-          socketId: socket.id,
-          lobbyId: newLobbyId,
-        });
-        socket.join(lobbyRoom(result.lobbyId));
-        socketInfoMap.set(socket.id, { playerId: result.playerId, lobbyId: result.lobbyId });
-        socket.emit('lobby_status', result.lobby);
-        ack?.({ ok: true, lobbyId: result.lobbyId });
-      } catch (err) {
-        handleError(socket, err, ack);
-      }
-    });
-
     socket.on('join_lobby', async (payload: unknown, ack?: (res: unknown) => void) => {
       try {
-        const { nickname, lobbyId } = joinSchema.parse(payload);
-        const result = await deps.joinLobby.execute({ nickname, socketId: socket.id, lobbyId });
+        const { nickname } = joinSchema.parse(payload);
+        const result = await deps.joinLobby.execute({ nickname, socketId: socket.id });
         socket.join(lobbyRoom(result.lobbyId));
         socketInfoMap.set(socket.id, { playerId: result.playerId, lobbyId: result.lobbyId });
         socket.emit('lobby_status', result.lobby);
@@ -88,11 +65,10 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
       }
     });
 
-    socket.on('attack', async (payload: unknown, ack?: (res: unknown) => void) => {
+    socket.on('attack', async (_: unknown, ack?: (res: unknown) => void) => {
       try {
         const { playerId, lobbyId } = requirePlayer(socket);
-        const { moveName } = attackSchema.parse(payload);
-        await deps.processAttack.execute(playerId, lobbyId, moveName);
+        await deps.processAttack.execute(playerId, lobbyId);
         ack?.({ ok: true });
       } catch (err) {
         handleError(socket, err, ack);

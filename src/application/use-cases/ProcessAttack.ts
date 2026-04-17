@@ -47,7 +47,7 @@ export class ProcessAttack {
     return next;
   }
 
-  async execute(playerId: string, lobbyId: string, moveName?: string): Promise<void> {
+  async execute(playerId: string, lobbyId: string): Promise<void> {
     const mutex = this.getMutex(lobbyId);
     await mutex.runExclusive(async () => {
       const lobby = await this._lobbies.findById(lobbyId);
@@ -70,15 +70,7 @@ export class ProcessAttack {
         throw new DomainError('Active Pokemon missing');
       }
 
-      let movePower = 50; // default fallback
-      if (moveName && attackerMon.moves.length > 0) {
-        const selectedMove = attackerMon.moves.find((m) => m.name.toLowerCase() === moveName.toLowerCase());
-        if (selectedMove) {
-          movePower = selectedMove.power;
-        }
-      }
-
-      const damage = calculateDamage(movePower, attackerMon.attack, defenderMon.defense);
+      const damage = calculateDamage(attackerMon.attack, defenderMon.defense);
       defenderMon.receiveDamage(damage);
 
       const battle = await this._battles.findActiveByLobby(lobby.id);

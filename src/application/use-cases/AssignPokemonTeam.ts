@@ -1,21 +1,19 @@
 import { Pokemon } from '../../domain/entities/Pokemon.js';
 import { LobbyRepository } from '../../domain/repositories/LobbyRepository.js';
 import { PokemonCatalogService } from '../../domain/services/PokemonCatalogService.js';
-import { MoveCatalogService } from '../../domain/services/MoveCatalogService.js';
 import { DomainError, NotFoundError } from '../../domain/errors/DomainError.js';
 import { BattleEventPublisher } from '../ports/BattleEventPublisher.js';
 
 const TEAM_SIZE = 3;
 
 /**
- * Assigns 3 random Pokemon to a player with real moves from PokeAPI.
+ * Assigns 3 random Pokemon to a player from the catalog.
  * Pokemon already taken by the opponent are excluded.
  */
 export class AssignPokemonTeam {
   constructor(
     private readonly _lobbies: LobbyRepository,
     private readonly _catalog: PokemonCatalogService,
-    private readonly _moveCatalog: MoveCatalogService,
     private readonly _publisher: BattleEventPublisher,
   ) {}
 
@@ -38,23 +36,9 @@ export class AssignPokemonTeam {
     const picked = this.pickRandom(available, TEAM_SIZE).map((p) => p.id);
     const details = await this._catalog.getManyDetails(picked);
 
-    // Fetch moves for each Pokemon in parallel
-    const team = await Promise.all(
-      details.map(async (d) => {
-        const moves = await this._moveCatalog.getMovesForPokemon(d.id);
-        const pokemon = new Pokemon(
-          d.id,
-          d.name,
-          d.type,
-          d.maxHp,
-          d.attack,
-          d.defense,
-          d.speed,
-          d.sprite,
-        );
-        pokemon.assignMoves(moves);
-        return pokemon;
-      }),
+    const team = details.map(
+      (d) =>
+        new Pokemon(d.id, d.name, d.type, d.maxHp, d.attack, d.defense, d.speed, d.sprite),
     );
 
     player.assignTeam(team);

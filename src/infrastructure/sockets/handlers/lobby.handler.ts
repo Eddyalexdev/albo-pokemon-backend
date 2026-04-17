@@ -21,6 +21,10 @@ const joinSchema = z.object({
   lobbyId: z.string().optional(),
 });
 
+const attackSchema = z.object({
+  moveName: z.string().optional(),
+});
+
 interface SocketInfo {
   playerId: string;
   lobbyId: string;
@@ -82,10 +86,11 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
       }
     });
 
-    socket.on('attack', async (_: unknown, ack?: (res: unknown) => void) => {
+    socket.on('attack', async (payload: unknown, ack?: (res: unknown) => void) => {
       try {
         const { playerId, lobbyId } = requirePlayer(socket);
-        await deps.processAttack.execute(playerId, lobbyId);
+        const { moveName } = attackSchema.parse(payload);
+        await deps.processAttack.execute(playerId, lobbyId, moveName);
         ack?.({ ok: true });
       } catch (err) {
         handleError(socket, err, ack);

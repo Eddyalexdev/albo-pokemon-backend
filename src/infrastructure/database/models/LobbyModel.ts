@@ -1,5 +1,15 @@
 import { Schema, model, InferSchemaType } from 'mongoose';
 
+const MoveSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    power: { type: Number, required: true },
+    accuracy: { type: Number, required: true },
+    type: { type: String, required: true },
+  },
+  { _id: false },
+);
+
 const PokemonSchema = new Schema(
   {
     id: { type: Number, required: true },
@@ -12,6 +22,7 @@ const PokemonSchema = new Schema(
     speed: { type: Number, required: true },
     sprite: { type: String, required: true },
     defeated: { type: Boolean, default: false },
+    moves: { type: [MoveSchema], default: [] },
   },
   { _id: false },
 );

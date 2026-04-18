@@ -1,4 +1,4 @@
-# ⚔️ Pokémon Stadium Lite — Backend
+# albo pokemon backend by eddy
 
 > A realtime multiplayer Pokémon battle backend. Two trainers enter, one champion leaves.
 
@@ -6,14 +6,7 @@
 [![Deploy](https://github.com/Eddyalexdev/albo-pokemon-backend/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/Eddyalexdev/albo-pokemon-backend/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-```
-     ██╗    ██╗███████╗██╗      ██████╗ ██████╗ ███╗   ███╗██████╗ ██╗
-     ██║    ██║██╔════╝██║     ██╔════╝██╔═══██╗████╗ ████║██╔══██╗██║
-     ██║ █╗ ██║█████╗  ██║     ██║     ██║   ██║██╔████╔██║██║  ██║██║
-     ██║███╗██║██╔══╝  ██║     ██║     ██║   ██║██║╚██╔╝██║██║  ██║╚═╝
-     ╚███╔███╔╝███████╗███████╗╚██████╗╚██████╔╝██║ ╚═╝ ██║██████╔╝██╗
-      ╚══╝╚══╝ ╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═════╝ ╚═╝
-```
+![Pokémon Stadium Lite](./src/assets/screenshot.png)
 
 **Fastify + Socket.IO + MongoDB** · Clean Architecture · TypeScript ESM
 

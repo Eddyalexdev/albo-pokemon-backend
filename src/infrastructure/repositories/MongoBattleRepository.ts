@@ -32,6 +32,10 @@ export class MongoBattleRepository implements BattleRepository {
     return doc ? this.toSnapshot(doc) : null;
   }
 
+  async delete(lobbyId: string): Promise<void> {
+    await BattleModel.deleteMany({ lobbyId });
+  }
+
   private toSnapshot(doc: Record<string, unknown>): BattleSnapshot {
     return {
       id: doc._id as string,

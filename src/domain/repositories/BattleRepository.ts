@@ -10,4 +10,5 @@ export interface BattleRepository {
   appendTurn(battleId: string, turn: TurnRecord): Promise<void>;
   finish(battleId: string, winnerPlayerId: string): Promise<void>;
   findActiveByLobby(lobbyId: string): Promise<BattleSnapshot | null>;
+  delete(lobbyId: string): Promise<void>;
 }

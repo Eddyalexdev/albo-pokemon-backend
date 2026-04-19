@@ -41,6 +41,7 @@ async function bootstrap(): Promise<void> {
     markReady: container.markReady,
     processAttack: container.processAttack,
     resetLobby: container.resetLobby,
+    lobbies: container.lobbies,
   });
 
   await app.listen({ host: env.HOST, port: env.PORT });

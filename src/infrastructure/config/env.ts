@@ -11,7 +11,7 @@ const schema = z.object({
     .string()
     .url()
     .default('https://pokemon-api-92034153384.us-central1.run.app'),
-  CORS_ORIGIN: z.string().default('*'),
+  CORS_ORIGIN: z.string().min(1),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
     .default('info'),

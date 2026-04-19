@@ -1,4 +1,5 @@
 import { Pokemon, PokemonSnapshot } from './Pokemon.js';
+import { DomainError } from '../errors/DomainError.js';
 
 /**
  * Player — Entity
@@ -46,7 +47,7 @@ export class Player {
 
   assignTeam(team: Pokemon[]): void {
     if (team.length !== 3) {
-      throw new Error('A team must have exactly 3 Pokemon');
+      throw new DomainError('Team must have exactly 3 Pokemon', 'INVALID_TEAM');
     }
     this._team = team;
     this._activeIndex = 0;
@@ -55,7 +56,7 @@ export class Player {
 
   markReady(): void {
     if (this._team.length !== 3) {
-      throw new Error('Cannot be ready without a full team');
+      throw new DomainError('Cannot ready without a full team', 'TEAM_INCOMPLETE');
     }
     this._ready = true;
   }

@@ -5,7 +5,8 @@ import { AssignPokemonTeam } from '../../../application/use-cases/AssignPokemonT
 import { MarkReady } from '../../../application/use-cases/MarkReady.js';
 import { ProcessAttack } from '../../../application/use-cases/ProcessAttack.js';
 import { ResetLobby } from '../../../application/use-cases/ResetLobby.js';
-import { DomainError } from '../../../domain/errors/DomainError.js';
+import { DomainError, NotFoundError } from '../../../domain/errors/DomainError.js';
+import { LobbyRepository } from '../../../domain/repositories/LobbyRepository.js';
 
 export interface LobbyHandlersDeps {
   joinLobby: JoinLobby;
@@ -13,6 +14,7 @@ export interface LobbyHandlersDeps {
   markReady: MarkReady;
   processAttack: ProcessAttack;
   resetLobby: ResetLobby;
+  lobbies: LobbyRepository;
 }
 
 const joinSchema = z.object({
@@ -47,7 +49,7 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
 
     socket.on('assign_pokemon', async (_: unknown, ack?: (res: unknown) => void) => {
       try {
-        const { playerId, lobbyId } = requirePlayer(socket);
+        const { playerId, lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.assignTeam.execute(playerId, lobbyId);
         ack?.({ ok: true });
       } catch (err) {
@@ -57,7 +59,7 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
 
     socket.on('ready', async (_: unknown, ack?: (res: unknown) => void) => {
       try {
-        const { playerId, lobbyId } = requirePlayer(socket);
+        const { playerId, lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.markReady.execute(playerId, lobbyId);
         ack?.({ ok: true });
       } catch (err) {
@@ -67,7 +69,7 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
 
     socket.on('attack', async (_: unknown, ack?: (res: unknown) => void) => {
       try {
-        const { playerId, lobbyId } = requirePlayer(socket);
+        const { playerId, lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.processAttack.execute(playerId, lobbyId);
         ack?.({ ok: true });
       } catch (err) {
@@ -77,7 +79,7 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
 
     socket.on('reset_lobby', async (_: unknown, ack?: (res: unknown) => void) => {
       try {
-        const { lobbyId } = requirePlayer(socket);
+        const { lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.resetLobby.execute(lobbyId);
         ack?.({ ok: true });
       } catch (err) {
@@ -91,9 +93,21 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
   });
 }
 
-function requirePlayer(socket: Socket): SocketInfo {
+/**
+ * Validates that the socket has joined a lobby and the player still exists
+ * in the actual lobby state (not just in the local socket map).
+ * Prevents authorization bypass where a socket could hold stale playerId.
+ */
+async function requirePlayer(socket: Socket, lobbies: LobbyRepository): Promise<SocketInfo> {
   const info = socketInfoMap.get(socket.id);
   if (!info) throw new DomainError('Join the lobby first');
+
+  const lobby = await lobbies.findById(info.lobbyId);
+  if (!lobby) throw new NotFoundError('Lobby not found');
+
+  const player = lobby.findPlayerById(info.playerId);
+  if (!player) throw new DomainError('You are no longer part of this lobby');
+
   return info;
 }
 

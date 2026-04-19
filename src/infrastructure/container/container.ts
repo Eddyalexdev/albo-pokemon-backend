@@ -31,6 +31,7 @@ export function buildContainer(env: Env, io: Server) {
   return {
     catalog,
     publisher,
+    lobbies,
     getCatalog,
     joinLobby,
     assignTeam,

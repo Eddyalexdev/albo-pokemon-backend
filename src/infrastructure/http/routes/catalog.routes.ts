@@ -17,9 +17,15 @@ export function registerCatalogRoutes(
     return items;
   });
 
-  app.get<{ Params: { id: string } }>('/list/:id', async (req) => {
+  app.get<{ Params: { id: string } }>('/list/:id', async (req, reply) => {
     const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) {
+      return reply.status(400).send({ error: 'INVALID_ID', message: 'Pokemon ID must be a positive integer' });
+    }
     const pokemon = await deps.catalog.getDetail(id);
+    if (!pokemon) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: 'Pokemon not found' });
+    }
     return pokemon;
   });
 

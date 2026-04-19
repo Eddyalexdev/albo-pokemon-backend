@@ -11,6 +11,9 @@ importers:
       '@fastify/cors':
         specifier: ^10.0.1
         version: 10.1.0
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       fastify:
         specifier: ^5.1.0
         version: 5.8.5
@@ -508,6 +511,10 @@ packages:
   dequal@2.0.3:
     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
     engines: {node: '>=6'}
+
+  dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
+    engines: {node: '>=12'}
 
   end-of-stream@1.4.5:
     resolution: {integrity: sha512-ooEGc6HP26xXq/N+GCGOT0JKCLDGrq2bQUZrQ7gyrJiZANJ/8YDTxTpQBXGMn+WbIQXNVpyWymm7KYVICQnyOg==}
@@ -1461,6 +1468,8 @@ snapshots:
   deep-is@0.1.4: {}
 
   dequal@2.0.3: {}
+
+  dotenv@17.4.2: {}
 
   end-of-stream@1.4.5:
     dependencies:

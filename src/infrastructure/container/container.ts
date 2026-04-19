@@ -26,7 +26,7 @@ export function buildContainer(env: Env, io: Server) {
   const assignTeam = new AssignPokemonTeam(lobbies, catalog, publisher);
   const markReady = new MarkReady(lobbies, battles, publisher);
   const processAttack = new ProcessAttack(lobbies, battles, publisher);
-  const resetLobby = new ResetLobby(lobbies, battles, publisher);
+  const resetLobby = new ResetLobby(lobbies, battles, publisher, assignTeam, processAttack);
 
   return {
     catalog,

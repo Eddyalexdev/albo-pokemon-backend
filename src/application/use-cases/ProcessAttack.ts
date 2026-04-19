@@ -16,9 +16,10 @@ import { Mutex } from '../../shared/Mutex.js';
  * Flow:
  *  1. Acquire per-lobby lock
  *  2. Reload lobby + validate turn ownership
- *  3. Apply damage, swap defeated Pokemon, detect winner
- *  4. Persist + emit events
- *  5. Release lock
+ *  3. Load battle to initialize turn counter from persisted state
+ *  4. Apply damage, swap defeated Pokemon, detect winner
+ *  5. Persist + emit events
+ *  6. Release lock
  */
 export class ProcessAttack {
   private readonly mutexes = new Map<string, Mutex>();
@@ -47,6 +48,24 @@ export class ProcessAttack {
     return next;
   }
 
+  /**
+   * Initializes the turn counter for a lobby from persisted battle state.
+   * Only sets if not already tracked — prevents overwriting on subsequent turns.
+   */
+  private initializeTurnCounter(lobbyId: string, persistedTurnCount: number): void {
+    if (!this.turnCounters.has(lobbyId)) {
+      this.turnCounters.set(lobbyId, persistedTurnCount);
+    }
+  }
+
+  /**
+   * Cleanup mutex and turn counter for a lobby — called when lobby is reset.
+   */
+  cleanup(lobbyId: string): void {
+    this.mutexes.delete(lobbyId);
+    this.turnCounters.delete(lobbyId);
+  }
+
   async execute(playerId: string, lobbyId: string): Promise<void> {
     const mutex = this.getMutex(lobbyId);
     await mutex.runExclusive(async () => {
@@ -70,11 +89,15 @@ export class ProcessAttack {
         throw new DomainError('Active Pokemon missing');
       }
 
-      const damage = calculateDamage(attackerMon.attack, defenderMon.defense);
-      defenderMon.receiveDamage(damage);
-
+      // Load battle first to initialize turn counter from persisted state
       const battle = await this._battles.findActiveByLobby(lobby.id);
       if (!battle) throw new NotFoundError('Active battle not found');
+
+      // Initialize turn counter from persisted turns (survives server restarts)
+      this.initializeTurnCounter(lobbyId, battle.turns.length);
+
+      const damage = calculateDamage(attackerMon.attack, defenderMon.defense);
+      defenderMon.receiveDamage(damage);
 
       const turn: TurnRecord = {
         turnNumber: this.incrementTurnCounter(lobbyId),

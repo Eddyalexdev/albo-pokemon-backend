@@ -18,12 +18,32 @@ export interface JoinLobbyOutput {
   reconnected: boolean;
 }
 
+/**
+ * JoinLobby — Use Case
+ *
+ * Adds a player to the lobby by nickname. Supports reconnection:
+ * if the nickname already exists in the lobby (from a previous session),
+ * the socketId is updated and the player resumes their session.
+ *
+ * Flow:
+ *  1. Find or create a waiting lobby
+ *  2. If same nickname reconnecting → update socketId, return reconnected=true
+ *  3. If lobby full → error
+ *  4. Otherwise → add new player
+ */
 export class JoinLobby {
   constructor(
     private readonly _lobbies: LobbyRepository,
     private readonly _publisher: BattleEventPublisher,
   ) {}
 
+  /**
+   * @param input.nickname - Player's trainer nickname (1-20 chars)
+   * @param input.socketId - Current socket connection id
+   * @param input.lobbyId - Optional specific lobby to join (else joins first waiting)
+   * @throws DomainError('Lobby is full') - When lobby already has 2 players
+   * @throws DomainError('Nickname is required') - When nickname is empty
+   */
   async execute(input: JoinLobbyInput): Promise<JoinLobbyOutput> {
     const nickname = input.nickname.trim();
     if (!nickname) throw new DomainError('Nickname is required');

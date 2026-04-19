@@ -13,5 +13,4 @@ export interface BattleEventPublisher {
   pokemonDefeated(lobby: LobbySnapshot, playerId: string, pokemonId: number, lobbyId: string): void;
   pokemonEntered(lobby: LobbySnapshot, playerId: string, pokemonId: number, lobbyId: string): void;
   battleEnd(lobby: LobbySnapshot, winnerPlayerId: string, lobbyId: string): void;
-  error(socketId: string, message: string): void;
 }

@@ -38,8 +38,4 @@ export class SocketBattleEventPublisher implements BattleEventPublisher {
   battleEnd(lobby: LobbySnapshot, winnerPlayerId: string, lobbyId: string): void {
     this.io.to(lobbyRoom(lobbyId)).emit('battle_end', { lobby, winnerPlayerId });
   }
-
-  error(socketId: string, message: string): void {
-    this.io.to(socketId).emit('error_event', { message });
-  }
 }

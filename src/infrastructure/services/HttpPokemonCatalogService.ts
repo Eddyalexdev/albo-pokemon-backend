@@ -1,4 +1,5 @@
 import { request } from 'undici';
+import { z } from 'zod';
 import { CatalogListItem, PokemonCatalogService } from '../../domain/services/PokemonCatalogService.js';
 import { PokemonSnapshot } from '../../domain/entities/Pokemon.js';
 
@@ -11,27 +12,30 @@ import { PokemonSnapshot } from '../../domain/entities/Pokemon.js';
  * GET /list   → { success, total, data: [{id, name, sprite}] }
  * GET /list/:id → { success, data: {id, name, type, hp, attack, defense, speed, sprite} }
  */
-interface ListWireItem {
-  id: number;
-  name: string;
-  sprite?: string;
-}
 
-interface DetailWireItem {
-  id: number;
-  name: string;
-  type: string[];
-  hp: number;
-  attack: number;
-  defense: number;
-  speed: number;
-  sprite: string;
-}
+/** Zod schemas for validating the external API wire format */
+const ListWireItemSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1),
+  sprite: z.string().optional(),
+});
 
-interface Envelope<T> {
-  success: boolean;
-  data: T;
-}
+const DetailWireItemSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(1),
+  type: z.array(z.string()).default([]),
+  hp: z.number().nonnegative(),
+  attack: z.number().nonnegative(),
+  defense: z.number().nonnegative(),
+  speed: z.number().nonnegative(),
+  sprite: z.string(),
+});
+
+const EnvelopeSchema = <T>(dataSchema: z.ZodSchema<T>) =>
+  z.object({
+    success: z.boolean(),
+    data: dataSchema,
+  });
 
 export class HttpPokemonCatalogService implements PokemonCatalogService {
   private listCache: CatalogListItem[] | null = null;
@@ -42,8 +46,9 @@ export class HttpPokemonCatalogService implements PokemonCatalogService {
     if (this.listCache) return this.listCache;
     const res = await request(`${this.baseUrl}/list`);
     if (res.statusCode >= 400) throw new Error(`Catalog list failed: ${res.statusCode}`);
-    const body = (await res.body.json()) as Envelope<ListWireItem[]>;
-    const items = (body.data ?? []).map((x) => ({ id: x.id, name: x.name }));
+    const parsed = EnvelopeSchema(z.array(ListWireItemSchema)).safeParse(await res.body.json());
+    if (!parsed.success) throw new Error(`Catalog list wire format invalid: ${parsed.error.message}`);
+    const items = parsed.data.data.map((x) => ({ id: x.id, name: x.name }));
     this.listCache = items;
     return items;
   }
@@ -51,8 +56,9 @@ export class HttpPokemonCatalogService implements PokemonCatalogService {
   async getDetail(id: number): Promise<PokemonSnapshot> {
     const res = await request(`${this.baseUrl}/list/${id}`);
     if (res.statusCode >= 400) throw new Error(`Catalog detail failed: ${res.statusCode}`);
-    const body = (await res.body.json()) as Envelope<DetailWireItem>;
-    const d = body.data;
+    const parsed = EnvelopeSchema(DetailWireItemSchema).safeParse(await res.body.json());
+    if (!parsed.success) throw new Error(`Catalog detail wire format invalid: ${parsed.error.message}`);
+    const d = parsed.data.data;
     return {
       id: d.id,
       name: d.name,

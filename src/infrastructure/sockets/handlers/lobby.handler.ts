@@ -7,6 +7,7 @@ import { ProcessAttack } from '../../../application/use-cases/ProcessAttack.js';
 import { ResetLobby } from '../../../application/use-cases/ResetLobby.js';
 import { DomainError, NotFoundError } from '../../../domain/errors/DomainError.js';
 import { LobbyRepository } from '../../../domain/repositories/LobbyRepository.js';
+import { lobbyRoom } from '../../../shared/socket.js';
 
 export interface LobbyHandlersDeps {
   joinLobby: JoinLobby;
@@ -53,10 +54,6 @@ function removeStaleSocketEntry(playerId: string): void {
       break;
     }
   }
-}
-
-function lobbyRoom(lobbyId: string): string {
-  return `lobby:${lobbyId}`;
 }
 
 export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void {

@@ -2,10 +2,7 @@ import type { Server } from 'socket.io';
 import { LobbySnapshot } from '../../domain/entities/Lobby.js';
 import { TurnRecord } from '../../domain/entities/Battle.js';
 import { BattleEventPublisher } from '../../application/ports/BattleEventPublisher.js';
-
-function lobbyRoom(lobbyId: string): string {
-  return `lobby:${lobbyId}`;
-}
+import { lobbyRoom } from '../../shared/socket.js';
 
 /**
  * SocketBattleEventPublisher — Adapter (driving)

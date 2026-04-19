@@ -6,6 +6,7 @@
 /**
  * Damage = max(1, attackerAttack - defenderDefense)
  * Spec: if the result is less than 1, set to 1 (minimum damage rule).
+ * This is a pure domain function — no side effects, exported for unit testing.
  */
 export function calculateDamage(attackerAttack: number, defenderDefense: number): number {
   const raw = attackerAttack - defenderDefense;

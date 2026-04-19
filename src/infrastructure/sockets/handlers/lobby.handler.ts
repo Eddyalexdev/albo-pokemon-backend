@@ -21,12 +21,39 @@ const joinSchema = z.object({
   nickname: z.string().min(1).max(20),
 });
 
+// Intentional empty payload schemas — these events carry no data;
+// state is retrieved from the authenticated socket identity (socketInfoMap).
+const assignPokemonSchema = z.object({});
+const readySchema = z.object({});
+const attackSchema = z.object({});
+const resetLobbySchema = z.object({});
+
 interface SocketInfo {
   playerId: string;
   lobbyId: string;
 }
 
+/**
+ * In-memory socket-to-player mapping.
+ * NOTE: This Map is per-process. In a multi-process deployment (PM2 cluster,
+ * Node.js cluster module), each process has its own Map, leading to inconsistent
+ * state. If horizontal scaling is planned, replace this with a shared store
+ * (e.g., Redis + Socket.IO adapter).
+ */
 const socketInfoMap = new Map<string, SocketInfo>();
+
+/**
+ * Removes stale socket entry when a player reconnects with a new socket.
+ * Prevents race condition where two sockets share the same playerId.
+ */
+function removeStaleSocketEntry(playerId: string): void {
+  for (const [socketId, info] of socketInfoMap.entries()) {
+    if (info.playerId === playerId) {
+      socketInfoMap.delete(socketId);
+      break;
+    }
+  }
+}
 
 function lobbyRoom(lobbyId: string): string {
   return `lobby:${lobbyId}`;
@@ -38,6 +65,13 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
       try {
         const { nickname } = joinSchema.parse(payload);
         const result = await deps.joinLobby.execute({ nickname, socketId: socket.id });
+
+        // If reconnecting, invalidate the old socket entry to prevent
+        // two sockets from being associated with the same playerId
+        if (result.reconnected) {
+          removeStaleSocketEntry(result.playerId);
+        }
+
         socket.join(lobbyRoom(result.lobbyId));
         socketInfoMap.set(socket.id, { playerId: result.playerId, lobbyId: result.lobbyId });
         socket.emit('lobby_status', result.lobby);
@@ -47,8 +81,9 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
       }
     });
 
-    socket.on('assign_pokemon', async (_: unknown, ack?: (res: unknown) => void) => {
+    socket.on('assign_pokemon', async (payload: unknown, ack?: (res: unknown) => void) => {
       try {
+        assignPokemonSchema.parse(payload); // validates even if empty
         const { playerId, lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.assignTeam.execute(playerId, lobbyId);
         ack?.({ ok: true });
@@ -57,8 +92,9 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
       }
     });
 
-    socket.on('ready', async (_: unknown, ack?: (res: unknown) => void) => {
+    socket.on('ready', async (payload: unknown, ack?: (res: unknown) => void) => {
       try {
+        readySchema.parse(payload);
         const { playerId, lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.markReady.execute(playerId, lobbyId);
         ack?.({ ok: true });
@@ -67,8 +103,9 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
       }
     });
 
-    socket.on('attack', async (_: unknown, ack?: (res: unknown) => void) => {
+    socket.on('attack', async (payload: unknown, ack?: (res: unknown) => void) => {
       try {
+        attackSchema.parse(payload);
         const { playerId, lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.processAttack.execute(playerId, lobbyId);
         ack?.({ ok: true });
@@ -77,8 +114,9 @@ export function registerLobbyHandlers(io: Server, deps: LobbyHandlersDeps): void
       }
     });
 
-    socket.on('reset_lobby', async (_: unknown, ack?: (res: unknown) => void) => {
+    socket.on('reset_lobby', async (payload: unknown, ack?: (res: unknown) => void) => {
       try {
+        resetLobbySchema.parse(payload);
         const { lobbyId } = await requirePlayer(socket, deps.lobbies);
         await deps.resetLobby.execute(lobbyId);
         ack?.({ ok: true });

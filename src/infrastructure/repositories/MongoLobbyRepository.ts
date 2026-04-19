@@ -1,7 +1,44 @@
+import { z } from 'zod';
 import { Lobby, LobbySnapshot } from '../../domain/entities/Lobby.js';
 import { LobbyRepository } from '../../domain/repositories/LobbyRepository.js';
 import { LobbyStatus } from '../../domain/value-objects/LobbyStatus.js';
 import { LobbyModel } from '../database/models/LobbyModel.js';
+
+/**
+ * Wire validation schema for raw MongoDB Lobby documents.
+ * Validates at runtime that the persisted data matches our expected shape.
+ */
+const PlayerDocSchema = z.object({
+  id: z.string(),
+  socketId: z.string(),
+  nickname: z.string(),
+  team: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      type: z.array(z.string()),
+      hp: z.number(),
+      maxHp: z.number(),
+      attack: z.number(),
+      defense: z.number(),
+      speed: z.number(),
+      sprite: z.string().url(),
+      defeated: z.boolean(),
+    }),
+  ),
+  activeIndex: z.number().int(),
+  ready: z.boolean(),
+});
+
+const LobbyDocSchema = z.object({
+  _id: z.string(),
+  status: z.enum(['waiting', 'ready', 'battling', 'finished']),
+  players: z.array(PlayerDocSchema),
+  currentTurnPlayerId: z.string().nullable(),
+  winnerPlayerId: z.string().nullable(),
+  createdAt: z.instanceof(Date),
+  updatedAt: z.instanceof(Date),
+});
 
 export class MongoLobbyRepository implements LobbyRepository {
   async findById(id: string): Promise<Lobby | null> {
@@ -47,20 +84,19 @@ export class MongoLobbyRepository implements LobbyRepository {
   }
 
   private toSnapshot(doc: Record<string, unknown>): LobbySnapshot {
+    const parsed = LobbyDocSchema.safeParse(doc);
+    if (!parsed.success) {
+      throw new Error(`Invalid lobby document from MongoDB: ${parsed.error.message}`);
+    }
+    const d = parsed.data;
     return {
-      id: doc._id as string,
-      status: doc.status as LobbyStatus,
-      players: doc.players as LobbySnapshot['players'],
-      currentTurnPlayerId: (doc.currentTurnPlayerId as string | null) ?? null,
-      winnerPlayerId: (doc.winnerPlayerId as string | null) ?? null,
-      createdAt:
-        doc.createdAt instanceof Date
-          ? doc.createdAt.toISOString()
-          : new Date().toISOString(),
-      updatedAt:
-        doc.updatedAt instanceof Date
-          ? doc.updatedAt.toISOString()
-          : new Date().toISOString(),
+      id: d._id,
+      status: d.status as LobbyStatus,
+      players: d.players,
+      currentTurnPlayerId: d.currentTurnPlayerId ?? null,
+      winnerPlayerId: d.winnerPlayerId ?? null,
+      createdAt: d.createdAt.toISOString(),
+      updatedAt: d.updatedAt.toISOString(),
     };
   }
 }

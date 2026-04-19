@@ -15,6 +15,7 @@ export interface JoinLobbyOutput {
   playerId: string;
   lobbyId: string;
   lobby: LobbySnapshot;
+  reconnected: boolean;
 }
 
 export class JoinLobby {
@@ -39,7 +40,7 @@ export class JoinLobby {
       existingPlayer.updateSocketId(input.socketId);
       await this._lobbies.save(lobby);
       const snapshot = lobby.toSnapshot();
-      return { playerId: existingPlayer.id, lobbyId: lobby.id, lobby: snapshot };
+      return { playerId: existingPlayer.id, lobbyId: lobby.id, lobby: snapshot, reconnected: true };
     }
 
     if (lobby.players.length >= 2) {
@@ -52,6 +53,6 @@ export class JoinLobby {
 
     const snapshot = lobby.toSnapshot();
     this._publisher.lobbyStatus(snapshot, lobby.id);
-    return { playerId: player.id, lobbyId: lobby.id, lobby: snapshot };
+    return { playerId: player.id, lobbyId: lobby.id, lobby: snapshot, reconnected: false };
   }
 }

@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { Server as SocketIOServer } from 'socket.io';
-import { loadEnv } from './infrastructure/config/env.js';
+import { loadEnv, log } from './infrastructure/config/env.js';
 import { connectMongo, disconnectMongo } from './infrastructure/database/connection.js';
 import { buildContainer } from './infrastructure/container/container.js';
 import { registerCatalogRoutes } from './infrastructure/http/routes/catalog.routes.js';
@@ -59,6 +59,6 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((err) => {
-  console.error('Bootstrap failed:', err);
+  log.error({ err }, 'Bootstrap failed');
   process.exit(1);
 });

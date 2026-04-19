@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import pino from 'pino';
+
+export const log = pino({ level: 'info' });
 
 const schema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
@@ -19,7 +22,7 @@ export type Env = z.infer<typeof schema>;
 export function loadEnv(): Env {
   const parsed = schema.safeParse(process.env);
   if (!parsed.success) {
-    console.error('Invalid environment variables:', parsed.error.format());
+    log.error({ err: parsed.error.format() }, 'Invalid environment variables');
     process.exit(1);
   }
   return parsed.data;

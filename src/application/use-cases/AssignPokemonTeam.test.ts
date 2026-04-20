@@ -29,6 +29,9 @@ describe('AssignPokemonTeam', () => {
   let mockLobbies: {
     findById: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    findWaitingLobby: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
   };
   let mockPublisher: {
     lobbyStatus: ReturnType<typeof vi.fn>;
@@ -43,11 +46,14 @@ describe('AssignPokemonTeam', () => {
     mockLobbies = {
       findById: vi.fn(),
       save: vi.fn(),
+      create: vi.fn(),
+      findWaitingLobby: vi.fn(),
+      delete: vi.fn(),
     };
     mockPublisher = {
       lobbyStatus: vi.fn(),
     };
-    useCase = new AssignPokemonTeam(mockLobbies, mockCatalog, mockPublisher);
+    useCase = new AssignPokemonTeam(mockLobbies as any, mockCatalog as any, mockPublisher as any);
   });
 
   it('throws when lobby not found', async () => {

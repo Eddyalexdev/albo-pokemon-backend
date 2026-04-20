@@ -50,11 +50,16 @@ describe('ProcessAttack', () => {
   let mockLobbies: {
     findById: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    findWaitingLobby: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
   };
   let mockBattles: {
     findActiveByLobby: ReturnType<typeof vi.fn>;
     appendTurn: ReturnType<typeof vi.fn>;
     finish: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
   };
   let mockPublisher: {
     turnResult: ReturnType<typeof vi.fn>;
@@ -69,11 +74,16 @@ describe('ProcessAttack', () => {
     mockLobbies = {
       findById: vi.fn(),
       save: vi.fn(),
+      create: vi.fn(),
+      findWaitingLobby: vi.fn(),
+      delete: vi.fn(),
     };
     mockBattles = {
       findActiveByLobby: vi.fn(),
       appendTurn: vi.fn(),
       finish: vi.fn(),
+      create: vi.fn(),
+      delete: vi.fn(),
     };
     mockPublisher = {
       turnResult: vi.fn(),
@@ -82,7 +92,7 @@ describe('ProcessAttack', () => {
       battleEnd: vi.fn(),
       lobbyStatus: vi.fn(),
     };
-    useCase = new ProcessAttack(mockLobbies, mockBattles, mockPublisher);
+    useCase = new ProcessAttack(mockLobbies as any, mockBattles as any, mockPublisher as any);
   });
 
   it('throws when lobby not found', async () => {
@@ -173,7 +183,7 @@ describe('ProcessAttack', () => {
     expect(mockPublisher.turnResult).toHaveBeenCalled();
     // turnResult(lobby.toSnapshot(), turn, lobbyId)
     // call[0] = lobby snapshot, call[1] = turn, call[2] = lobbyId
-    const call = mockPublisher.turnResult.mock.calls[0];
+    const call = mockPublisher.turnResult.mock.calls[0]!;
     const turn = call[1] as { attackerPlayerId: string; defenderPlayerId: string };
     expect(turn.attackerPlayerId).toBe('player-1');
     expect(turn.defenderPlayerId).toBe('player-2');
@@ -252,7 +262,7 @@ describe('ProcessAttack', () => {
     vi.clearAllMocks();
     await useCase.execute('player-1', 'lobby-1');
     expect(mockPublisher.battleEnd).toHaveBeenCalled();
-    const call = mockPublisher.battleEnd.mock.calls[0];
+    const call = mockPublisher.battleEnd.mock.calls[0]!;
     expect(call[1]).toBe('player-1'); // player1 is winner
   });
 

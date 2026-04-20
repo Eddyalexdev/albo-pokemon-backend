@@ -37,6 +37,7 @@ The backend orchestrates the entire game lifecycle -- lobby state, team assignme
 | **Persistence** | Full battle history in MongoDB |
 | **Clean Architecture** | Domain -> Application -> Infrastructure layers |
 | **Env validation** | Zod schema -- fails fast on bad config |
+| **Testing** | 36 tests covering domain logic and use cases |
 
 ---
 
@@ -52,6 +53,7 @@ The backend orchestrates the entire game lifecycle -- lobby state, team assignme
 | Validation | Zod |
 | HTTP Client | Undici |
 | Logging | Pino + pino-pretty |
+| Testing | Vitest |
 
 ---
 
@@ -97,6 +99,35 @@ For detailed documentation, see:
 - [docs/entities.md](docs/entities.md) -- Domain entities with relationship diagrams, state transitions, persistence models
 - [docs/flows.md](docs/flows.md) -- Complete game flow diagrams, Socket.IO events, attack processing flow
 - [docs/business-logic.md](docs/business-logic.md) -- All business rules, formulas, validation, error handling
+- [docs/testing.md](docs/testing.md) -- Test structure, coverage, and running tests
+
+---
+
+## Testing
+
+```bash
+# Run tests once
+pnpm test:run
+
+# Run tests in watch mode
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
+```
+
+**36 tests** covering domain logic and use cases:
+
+| Test File | Coverage |
+|-----------|----------|
+| `Battle.test.ts` | `calculateDamage` function |
+| `Pokemon.test.ts` | `receiveDamage`, HP and defeat logic |
+| `Player.test.ts` | `markReady`, `advanceToNextAlive`, `hasAliveRemaining` |
+| `Lobby.test.ts` | `startBattleIfReady`, `switchTurn`, turn order by Speed |
+| `AssignPokemonTeam.test.ts` | Team assignment, no overlap, persistence |
+| `ProcessAttack.test.ts` | Attack processing, damage, defeat, auto-swap, battle end |
+
+Tests run automatically on every push and pull request via GitHub Actions.
 
 ---
 
@@ -193,9 +224,9 @@ pnpm dev
                        |  decides               |
                        | first turn            |
   Player A <--attack--+                   Turn loop:
-  Player B --turn_result--> HP updated         |
+  Player B --turn result--> HP updated         |
   Player B <--attack--+                   damage + defeat
-  Player A --turn_result-->                 check
+  Player A --turn result-->                 check
                                               |
                                         No Pokemon left?
                                            +--->+
@@ -219,6 +250,7 @@ albo-pokemon-backend/
 │   │   └── errors/                  # Domain errors
 │   ├── application/
 │   │   ├── use-cases/               # All 6 use cases
+│   │   ├── use-cases/*.test.ts     # Use case tests
 │   │   └── ports/                   # BattleEventPublisher
 │   ├── infrastructure/
 │   │   ├── http/                    # Fastify routes
@@ -235,7 +267,9 @@ albo-pokemon-backend/
 │   ├── architecture.md
 │   ├── entities.md
 │   ├── flows.md
-│   └── business-logic.md
+│   ├── business-logic.md
+│   └── testing.md
+├── vitest.config.ts                  # Test configuration
 ├── package.json
 ├── tsconfig.json
 ├── env.example
